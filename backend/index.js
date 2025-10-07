@@ -4,27 +4,37 @@ import dotenv from "dotenv";
 import notesRoutes from "./Routes/notesRoutes.js";
 import userRoutes from "./Routes/userRoutes.js";
 import connectdb from "./config/db.js";
-import cors from "cors"
+import cors from "cors";
+import path from "path";
 
 dotenv.config();
 
 const app = express();
+const __dirname = path.resolve();
 
-// Middleware
+if (process.env.NODE_ENV !== "production") {
+  app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+  }));
+}
 
-app.use(cors({
-    origin:"http://localhost:5173",
-    credentials:true
-}))
 app.use(cookieParser());
-
 app.use(express.json());
 
-// Routes
+// API routes
 app.use("/api/auth", userRoutes);
 app.use("/api/notes", notesRoutes);
 
-// Start server after DB connection
+// React frontend in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  app.get(/^\/.*$/, (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+}
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
@@ -40,5 +50,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-
